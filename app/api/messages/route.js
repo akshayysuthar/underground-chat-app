@@ -1,79 +1,85 @@
-// pages/api/inventory/new.js
-import { MongoClient } from "mongodb";
-import { NextResponse } from "next/server"; // For Next.js 13+ using the new app directory
+import { MongoClient, ObjectId } from "mongodb";
+import { NextResponse } from "next/server";
 
-// export async function GET(request) {
-//   // Replace the uri string with your connection string.
-//   const uri = process.env.MONGODB_URI;
-//   const client = new MongoClient(uri);
-//   try {
-//     await client.connect();
-//     const database = client.db("Chat");
-//     const inventory = database.collection("test");
-//     const products = await inventory.find({}).toArray(); // Fetch all documents
+// MongoDB connection URI
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri);
 
-//     return NextResponse.json({ success: true, products }); // Return as an object with a `products` key
-//   } catch (error) {
-//     console.error("Failed to fetch messages:", error);
-//     return NextResponse.json({
-//       success: false,
-//       error: "Failed to fetch messages",
-//     });
-//   } finally {
-//     await client.close();
-//   }
-// }
-
-
-export async function POST(request) {
-  let body = await request.json();
-  const uri = process.env.MONGODB_URI;
-  const client = new MongoClient(uri);
-  
+export async function GET() {
   try {
-    const database = client.db('Chat');
-    const collection = database.collection('messages');
-    
-    // Adding name, timestamp, and userId to the message
-    const newMessage = {
-      ...body,
-      name: body.name,
-      timestamp: new Date().toISOString(),
-      userId: body.userId,
-    };
-    
-    const result = await collection.insertOne(newMessage);
-    return NextResponse.json({ success: true, message: result.ops[0] });
+    await client.connect();
+    const database = client.db("Chat");
+    const messages = database.collection("test");
+
+    // Fetch all messages from the collection
+    const result = await messages.find({}).toArray();
+
+    return NextResponse.json({ success: true, products: result });
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch messages" },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }
 }
 
-export async function GET() {
-  const uri = process.env.MONGODB_URI;
-  const client = new MongoClient(uri);
-  
+export async function POST(request) {
   try {
-    const database = client.db('Chat');
-    const collection = database.collection('messages');
-    const messages = await collection.find().toArray(); // Sorting by time
-    // const messages = await collection.find().sort({ timestamp: 1 }).toArray(); // Sorting by time
-    return NextResponse.json({ success: true, messages });
+    const { userId, message, timestamp, name } = await request.json();
+    if (!userId || !message) {
+      return NextResponse.json(
+        { success: false, message: "Invalid data" },
+        { status: 400 }
+      );
+    }
+
+    await client.connect();
+    const database = client.db("Chat");
+    const messages = database.collection("test");
+
+    // Insert the new message into the collection
+    const newMessage = {
+      userId,
+      message,
+      timestamp,
+      name,
+    };
+    const result = await messages.insertOne(newMessage);
+
+    return NextResponse.json(
+      { success: true, product: result.ops[0] },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Failed to send message:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to send message" },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }
 }
 
 export async function DELETE(request) {
-  const { id } = await request.json();
-  const uri = process.env.MONGODB_URI;
-  const client = new MongoClient(uri);
-
   try {
-    const database = client.db('Chat');
-    const collection = database.collection('test');
-    await collection.deleteOne({ _id: new MongoClient.ObjectID(id) });
+    const { id } = await request.json();
+    await client.connect();
+    const database = client.db("Chat");
+    const messages = database.collection("test");
+
+    await messages.deleteOne({ _id: new ObjectId(id) });
+
     return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete message:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to delete message" },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }
