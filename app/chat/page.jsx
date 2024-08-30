@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { UserButton, useUser, SignOutButton } from '@clerk/nextjs';
 
 export default function Chat() {
   const { user, isLoaded } = useUser(); // Add isLoaded to ensure user data is fully loaded
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const chatEndRef = useRef(null); // 
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -17,6 +18,7 @@ export default function Chat() {
         const data = await response.json();
         if (data.success && Array.isArray(data.products)) {
           setMessages(data.products);
+          scrollToBottom(); // Scroll to bottom after fetching messages
         } else {
           console.error('Expected an array but got:', data);
         }
@@ -28,7 +30,7 @@ export default function Chat() {
     fetchMessages(); // Initial fetch on mount
 
     // Set up polling to fetch new messages periodically
-    const intervalId = setInterval(fetchMessages, 5000); // Fetch every 5 seconds
+    const intervalId = setInterval(fetchMessages, 1000); // Fetch every 5 seconds
 
     // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
@@ -58,6 +60,12 @@ export default function Chat() {
     }
   };
 
+  const scrollToBottom = () => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (!isLoaded) {
     return <div>Loading...</div>; // Handle the loading state
   }
@@ -65,6 +73,7 @@ export default function Chat() {
   if (!user) {
     return <div>Please log in to access the chat.</div>; // Handle case where user is not logged in
   }
+
 
   return (
     <div className="flex flex-col h-screen">
@@ -84,13 +93,17 @@ export default function Chat() {
         <div className="flex flex-col space-y-4">
           {messages.length > 0 ? (
             messages.map((msg) => (
-              <div key={msg._id} className={`p-3 rounded-lg shadow-md ${msg.userId === user.id ? 'self-end bg-blue-500 text-white' : 'bg-white'}`}>
+              <div
+                key={msg._id}
+                className={`p-3 rounded-lg shadow-md ${msg.userId === user.id ? 'self-end bg-blue-500 text-white' : 'bg-white'}`}
+              >
                 {msg.message}
               </div>
             ))
           ) : (
             <div className="text-center text-gray-500">No messages yet</div>
           )}
+          <div ref={chatEndRef} /> {/* Empty div to scroll to */}
         </div>
       </div>
 
