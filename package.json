@@ -9,12 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/backend": "^1.9.0",
+    "@clerk/clerk-react": "^5.5.0",
     "@clerk/nextjs": "^5.3.7",
+    "@uploadthing/react": "^6.7.2",
+    "aceternity-ui": "^0.2.2",
     "mongodb": "^6.8.0",
     "mongoose": "^8.6.0",
     "next": "14.2.7",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "shadcn-ui": "^0.8.0",
+    "uploadthing": "^6.13.2"
   },
   "devDependencies": {
     "@types/node": "22.5.1",

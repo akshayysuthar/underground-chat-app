@@ -14,10 +14,10 @@ export default function Home() {
   }, [isSignedIn, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center  justify-center min-h-screen bg-gray-100">
       {!isSignedIn ? (
-        <div>
-          <h1 className="text-3xl font-bold mb-4">
+        <div className="">
+          <h1 className="text-3xl text-black font-bold mb-4">
             Welcome to UnderGround Chat
           </h1>
           <SignInButton mode="modal">
