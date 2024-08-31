@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { useUser } from '@clerk/nextjs';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useUser } from "@clerk/nextjs";
 import Navbar from "../../components/Navbar";
+import { Button } from "../../components/ui/button";
 
 export default function Chat() {
   const { user } = useUser(); // Use Clerk to get the current user
@@ -10,22 +11,25 @@ export default function Chat() {
   const chatEndRef = useRef(null); // Reference for auto-scrolling
 
   // Fetch messages from the server
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch("/api/messages");
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       if (data.success && Array.isArray(data.products)) {
         setMessages(data.products);
+      } else {
+        console.error("Failed to fetch messages:", data.message || "Unknown error");
       }
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     }
-  };
+  }, []);
 
   // Fetch messages initially
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -51,12 +55,13 @@ export default function Chat() {
         },
         body: JSON.stringify(newMessage),
       });
+      if (!response.ok) throw new Error('Network response was not ok');
       const result = await response.json();
       if (!result.success) {
         console.error("Error sending message:", result.message);
       } else {
         setMessage("");
-        setMessages([...messages, { ...newMessage, _id: result.product }]); // Update local message list
+        setMessages((prevMessages) => [...prevMessages, { ...newMessage, _id: result.product }]); // Update local message list
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -67,16 +72,16 @@ export default function Chat() {
     <div className="flex flex-col h-screen">
       <Navbar />
 
-      <div className="flex justify-center mb-4 bg-transparent">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white  rounded-lg"
+      <div className="flex justify-center mb-4">
+        <Button
+          className="px-4 py-2 bg-transparent text-blue-600 border border-blue-600 rounded-lg"
           onClick={fetchMessages}
         >
           Refresh
-        </button>
+        </Button>
       </div>
 
-      <div className="flex flex-col flex-grow p-4 overflow-y-auto bg-gray-100">
+      <div className="flex flex-col flex-grow p-4 overflow-y-auto">
         <div className="flex flex-col space-y-4">
           {messages.length > 0 ? (
             messages.map((msg) => (
@@ -106,24 +111,25 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="p-4 bg-gray-200 text-black">
+      <div className="p-4 text-black">
         <div className="flex">
           <input
             type="text"
-            className="flex-grow p-2 rounded-lg border border-gray-300"
+            className="flex-grow p-2 rounded-lg border text-white border-gray-300"
             placeholder="Type a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
             disabled={!user} // Disable input if the user is not loaded
           />
-          <button
+          <Button
+            variant="outline"
             className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg"
             onClick={handleSendMessage}
             disabled={!user} // Disable button if the user is not loaded
           >
             Send
-          </button>
+          </Button>
         </div>
       </div>
     </div>
