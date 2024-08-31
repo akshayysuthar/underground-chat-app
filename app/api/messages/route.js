@@ -27,16 +27,20 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  let client;
+
   try {
+    client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    await client.connect();
+
     const { userId, message, timestamp, name } = await request.json();
-    if (!userId || !message) {
+    if (!userId || !message || !timestamp || !name) {
       return NextResponse.json(
         { success: false, message: "Invalid data" },
         { status: 400 }
       );
     }
 
-    await client.connect();
     const database = client.db("Chat");
     const messages = database.collection("test");
 
@@ -49,9 +53,12 @@ export async function POST(request) {
     };
     const result = await messages.insertOne(newMessage);
 
+    // Fetch the inserted message to return it
+    const insertedMessage = await messages.findOne({ _id: result.insertedId });
+
     return NextResponse.json(
-      { success: true, product: result.ops[0] },
-      { status: 201 }
+      { success: true, product: insertedMessage },
+      { status: 200 }
     );
   } catch (error) {
     console.error("Failed to send message:", error);
@@ -60,14 +67,31 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    await client.close();
+    if (client) {
+      try {
+        await client.close();
+      } catch (error) {
+        console.error("Failed to close MongoDB connection:", error);
+      }
+    }
   }
 }
 
 export async function DELETE(request) {
+  let client;
+
   try {
-    const { id } = await request.json();
+    client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
     await client.connect();
+
+    const { id } = await request.json();
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID" },
+        { status: 400 }
+      );
+    }
+
     const database = client.db("Chat");
     const messages = database.collection("test");
 
@@ -81,6 +105,12 @@ export async function DELETE(request) {
       { status: 500 }
     );
   } finally {
-    await client.close();
+    if (client) {
+      try {
+        await client.close();
+      } catch (error) {
+        console.error("Failed to close MongoDB connection:", error);
+      }
+    }
   }
 }
