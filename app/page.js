@@ -1,4 +1,6 @@
-"use client"
+"use client";
+import { Spotlight } from "@/components/ui/Spotlight";
+import { TextGenerateEffect } from "@/components/ui/TextGenerateEffect";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,12 +16,14 @@ export default function Home() {
   }, [isSignedIn, router]);
 
   return (
-    <div className="flex items-center  justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center  justify-center min-h-screen ">
       {!isSignedIn ? (
-        <div className="">
-          <h1 className="text-3xl text-black font-bold mb-4">
-            Welcome to UnderGround Chat
-          </h1>
+        <div>
+          
+          <TextGenerateEffect
+            words="Welcome to UnderGround Chat"
+            className="text-center text-[40px] md:text-6xl lg:text-6xl mb-5"
+          />
           <SignInButton mode="modal">
             <button className="px-6 py-2 bg-blue-600 text-white rounded-lg">
               Login
